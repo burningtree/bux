@@ -112,7 +112,7 @@
   require._cache = cache;
   globals.require = require;
 })();
-var BUXCli, Path, calcDiff, defaultsDeep, fs, program;
+var BUXCli, Path, defaultsDeep, fs, program;
 
 program = require('commander');
 
@@ -121,25 +121,6 @@ fs = require('fs');
 Path = require('path');
 
 defaultsDeep = require('lodash.defaultsdeep');
-
-calcDiff = function(current, traded, leverage, type) {
-  var diff, numb;
-  if (leverage == null) {
-    leverage = 1;
-  }
-  if (type == null) {
-    type = "SHORT";
-  }
-  diff = current - traded;
-  numb = new Number((diff / (traded / 100)) * leverage).toFixed(2);
-  if (type === 'SHORT') {
-    numb = new Number(-numb).toFixed(2);
-  }
-  if (numb > 0) {
-    numb = "+" + numb;
-  }
-  return numb + '%';
-};
 
 BUXCli = (function() {
   BUXCli.prototype.commands = {
@@ -580,10 +561,11 @@ BUXCli = (function() {
         sortRank: function(x) {
           return x.rendered.change.replace(/[\+]+/, '');
         },
-        render: function(x) {
-          return '';
-          return calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type);
-        }
+        render: (function(_this) {
+          return function(x) {
+            return '';
+          };
+        })(this)
       },
       created: {
         name: 'Created',
@@ -728,9 +710,11 @@ BUXCli = (function() {
         sortRank: function(x) {
           return x.rendered.change.replace(/[\+]+/, '');
         },
-        render: function(x) {
-          return calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type);
-        }
+        render: (function(_this) {
+          return function(x) {
+            return _this.calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type);
+          };
+        })(this)
       }
     };
     table = this.createTable(columns, 'positions', 'product');
@@ -995,9 +979,11 @@ BUXCli = (function() {
         sortRank: function(x) {
           return x.rendered.change.replace(/[\+]+/, '');
         },
-        render: function(x) {
-          return calcDiff(x.closingPrice.amount, x.currentPrice.amount, 1);
-        }
+        render: (function(_this) {
+          return function(x) {
+            return _this.calcDiff(x.closingPrice.amount, x.currentPrice.amount, 1);
+          };
+        })(this)
       },
       product_ident: {
         name: 'Product Id',
@@ -1203,6 +1189,25 @@ BUXCli = (function() {
     this.userConfig = defaultsDeep(config, this.userConfig);
     this.debug("Config loaded: " + (JSON.stringify(this.userConfig, null, 2)));
     return callback();
+  };
+
+  BUXCli.prototype.calcDiff = function(current, traded, leverage, type) {
+    var diff, numb;
+    if (leverage == null) {
+      leverage = 1;
+    }
+    if (type == null) {
+      type = "SHORT";
+    }
+    diff = current - traded;
+    numb = new Number((diff / (traded / 100)) * leverage).toFixed(2);
+    if (type === 'SHORT') {
+      numb = new Number(-numb).toFixed(2);
+    }
+    if (numb > 0) {
+      numb = "+" + numb;
+    }
+    return numb + '%';
   };
 
   return BUXCli;

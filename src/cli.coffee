@@ -4,14 +4,6 @@ Path = require 'path'
 defaultsDeep = require 'lodash.defaultsdeep'
 #yaml = require 'js-yaml'
 
-calcDiff = (current, traded, leverage=1, type="SHORT") ->
-  diff = current - traded
-  numb = new Number((diff/(traded/100)) * leverage).toFixed(2)
-  if type == 'SHORT'
-    numb = new Number(-numb).toFixed(2)
-  if numb>0 then numb = "+"+numb
-  return numb+'%'
-
 class BUXCli
 
   commands:
@@ -367,9 +359,9 @@ class BUXCli
         name: 'Change'
         align: 'RIGHT'
         sortRank: (x) -> x.rendered.change.replace(/[\+]+/,'')
-        render: (x) ->
+        render: (x) =>
           return ''
-          return calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type)
+          #return @calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type)
       created:
         name: 'Created'
         key: 'dateCreated'
@@ -461,8 +453,8 @@ class BUXCli
         name: 'Change'
         align: 'RIGHT'
         sortRank: (x) -> x.rendered.change.replace(/[\+]+/,'')
-        render: (x) ->
-          return calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type)
+        render: (x) =>
+          return @calcDiff(x.currentPrice.amount, x.tradePrice.amount, x.leverage, x.type)
 
     table = @createTable columns, 'positions', 'product'
 
@@ -625,8 +617,8 @@ class BUXCli
         name: 'Change'
         align: 'RIGHT'
         sortRank: (x) -> x.rendered.change.replace(/[\+]+/,'')
-        render: (x) ->
-          return calcDiff(x.closingPrice.amount, x.currentPrice.amount, 1)
+        render: (x) =>
+          return @calcDiff(x.closingPrice.amount, x.currentPrice.amount, 1)
       product_ident:
         name: 'Product Id'
         render: (x) => return @resolveProductSymbol(x.securityId)
@@ -769,6 +761,14 @@ class BUXCli
     @debug "Config loaded: #{JSON.stringify(@userConfig, null, 2)}"
 
     callback()
+
+  calcDiff: (current, traded, leverage=1, type="SHORT") ->
+    diff = current - traded
+    numb = new Number((diff/(traded/100)) * leverage).toFixed(2)
+    if type == 'SHORT'
+      numb = new Number(-numb).toFixed(2)
+    if numb>0 then numb = "+"+numb
+    return numb+'%'
 
 
 module.exports =
