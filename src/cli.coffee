@@ -83,6 +83,10 @@ class BUXCli
         [ '-c, --columns [columns]', 'Select columns to show' ]
         [ '-l, --list-columns', 'List available columns for sort or view' ]
       ]
+    exec:
+      title: 'exec <command> [<arguments>]'
+      aliases: [ 'e' ]
+      desc: 'Execute raw libbux command'
 
   config: {}
   cmdProgram: null
@@ -656,6 +660,15 @@ class BUXCli
       table.setSort @cmdProgram.sort || @userConfig.find.sort
 
       callback null, { text: table.render(x), json: x }
+
+  cmd_exec: (callback, args) ->
+    args = @program.args.map((x) -> return (if typeof x == 'string' and x != '' then x else false))
+    args = args.filter((x) -> return x != false)
+    args.push (err, data) -> callback null, { text: JSON.stringify(data, null, 2), json: data }
+
+    cmd = args.shift()
+    if !@bux[cmd] then return callback null, 'Bad command: '+cmd
+    @bux[cmd].apply @bux, args
 
   cmd_friends: (callback) ->
 

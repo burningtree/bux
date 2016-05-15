@@ -192,6 +192,11 @@ BUXCli = (function() {
       aliases: ['fr'],
       desc: 'List your friends',
       options: [['-s, --sort [column]', 'Sort table'], ['-c, --columns [columns]', 'Select columns to show'], ['-l, --list-columns', 'List available columns for sort or view']]
+    },
+    exec: {
+      title: 'exec <command> [<arguments>]',
+      aliases: ['e'],
+      desc: 'Execute raw libbux command'
     }
   };
 
@@ -1048,6 +1053,27 @@ BUXCli = (function() {
         });
       };
     })(this));
+  };
+
+  BUXCli.prototype.cmd_exec = function(callback, args) {
+    var cmd;
+    args = this.program.args.map(function(x) {
+      return (typeof x === 'string' && x !== '' ? x : false);
+    });
+    args = args.filter(function(x) {
+      return x !== false;
+    });
+    args.push(function(err, data) {
+      return callback(null, {
+        text: JSON.stringify(data, null, 2),
+        json: data
+      });
+    });
+    cmd = args.shift();
+    if (!this.bux[cmd]) {
+      return callback(null, 'Bad command: ' + cmd);
+    }
+    return this.bux[cmd].apply(this.bux, args);
   };
 
   BUXCli.prototype.cmd_friends = function(callback) {
